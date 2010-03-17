@@ -1,0 +1,4 @@
+#!/usr/bin/env php
+<?php
+chdir(__DIR__.'/../test');
+passthru('phpunit --configuration config.xml --verbose');
