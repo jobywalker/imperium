@@ -13,6 +13,8 @@ use Imperium\JSON as J;
  */
 class JSON
 {
+    const CODER_JSON = 1;
+    const CODER_ZEND = 2;
     
     /**
      * Decode JSON encoded string into PHP type
@@ -20,14 +22,18 @@ class JSON
      * This method uses json_decode if it exists, otherwise Zend_Json::decode.
      * 
      * @param string $json JSON encoded string
+     * @param integer $decoder Which decoder to use, default is autodetect.
      * @return mixed Decoded value as appropriate PHP type
      */
-    public static function decode($json)
+    public static function decode($json, $decoder=null)
     {
-        if (function_exists('json_decode')) {
-            $value = json_decode($json, true);
-        } else {
-            $value = \Zend_Json::decode($json);
+        if (!in_array($decoder, array(self::CODER_JSON, self::CODER_ZEND))) {
+            $decoder = function_exists('json_decode') ? self::CODER_JSON : self::CODER_ZEND;
+        }
+        if ($decoder == self::CODER_JSON) {
+            $value = json_decode($json, false);
+        } elseif ($decoder == self::CODER_ZEND) {
+            $value = \Zend_Json::decode($json, \Zend_Json::TYPE_OBJECT);
         }
         return self::rebuild($value);
     }
@@ -37,16 +43,19 @@ class JSON
      * Encode PHP type into JSON encoded string
      * 
      * @param mixed $value PHP type
+     * @param integer $encoder Which encoder to use, default is autodetect
      * @return string JSON encoded string
      */
-    public static function encode($value)
+    public static function encode($value, $encoder=null)
     {
-        $value = self::debuild($value);
-        if (function_exists('json_encode')) {
-            return json_encode($value);
-        } else {
-            return \Zend_Json::encode($value);
+        if (!in_array($encoder, array(self::CODER_JSON, self::CODER_ZEND))) {
+            $encoder = function_exists('json_encode') ? self::CODER_JSON : self::CODER_ZEND;
         }
+        $value = self::debuild($value);
+        if ($encoder == self::CODER_JSON) {
+            return json_encode($value);
+        }
+        return \Zend_Json::encode($value);
     }
     
     
@@ -58,17 +67,23 @@ class JSON
      */
     private static function rebuild($value)
     {
-        if (!is_array($value)) {
+        if ($value instanceof \StdClass) {
+            $temp = (array) $value;
+            $object = true;
+        } elseif (is_array($value)) {
+            $temp = $value;
+            $object = false;
+        } else {
             return $value;
         }
-        $temp = array();
-        foreach ($value as $key => $prop) {
-            $temp[$key] = self::rebuild($prop);
+        $inner = array();
+        foreach ($temp as $key => $prop) {
+            $inner[$key] = self::rebuild($prop);
         }
-        if (self::isJSONObject($value)) {
-            return new J\Object($temp);
+        if ($object) {
+            return new J\Object($inner);
         } else {
-            return new J\ArrayObject($temp);
+            return new J\ArrayObject($inner);
         }
     }
     
@@ -91,22 +106,5 @@ class JSON
         return $value;
     }
     
-    
-    /**
-     * Checks arrays to determine if it is an object (associative) or array (indexed)
-     * 
-     * @param array $value
-     * @return boolean True if parameter is an associative array
-     */
-    private static function isJSONObject($value)
-    {
-        if (!is_array($value)) {
-            return false;
-        }
-        if (!empty($value) && (array_keys($value) !== range(0, count($value)-1))) {
-            return true;
-        }
-        return false;
-    }
 
 }

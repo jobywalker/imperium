@@ -17,6 +17,8 @@ class BaseObject extends \ArrayObject
         $ar = $this->getArrayCopy();
         if (isset($ar[$index])) {
             return $ar[$index];
+        } elseif (in_array($index, array_keys($ar))){
+            return null;
         }
         return new Undefined;
     }
