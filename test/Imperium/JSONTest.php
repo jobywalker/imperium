@@ -65,4 +65,9 @@ class JSONTest extends \PHPUnit_Framework_TestCase
         );
         
     }
+    
+    public function test64BitInteger()
+    {
+        $this->assertEquals(8, \PHP_INT_SIZE);
+    }
 }

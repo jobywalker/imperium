@@ -74,17 +74,11 @@ class Schema
     {
         $type = strtolower(gettype($value));
         if ($type == 'object') {
-            if ($value instanceof Undefined) {
-                $type = 'undefined';
-            } elseif ($value instanceof ArrayObject) {
+            if ($value instanceof ArrayObject) {
                 $type = 'array';
             }
         } elseif ($type == 'double') {
-            if (preg_match('/\./', $value)) {
-                $type = 'number';
-            } else {
-                $type = 'integer';
-            }
+            $type = preg_match('/\./', $value) ? $type = 'number' : $type = 'integer';
         }
         return $type;
     }
@@ -105,7 +99,7 @@ class Schema
         }
         $errors = array();
         $pattern = $schema['pattern'];
-        if ($pattern && !preg_match("/$pattern/", $value)) {
+        if (is_string($pattern) && !preg_match("/$pattern/", $value)) {
             $errors[] = self::error($path, "Must match pattern: /$pattern/");
         }
         $maxLen = $schema['maxLength'];
@@ -132,9 +126,9 @@ class Schema
         $minimum = $schema['minimum'];
         $minEq   = $schema['minimumCanEqual'] === false ? false : true;
         if (is_numeric($minimum)) {
-            if ($minEq && $instance < $minimum) {
+            if ($minEq && $value < $minimum) {
                 $errors[] = self::error($path, "Must be greater than or equal to: $minimum");
-            } elseif (!$minEq && $instance <= $minimum) {
+            } elseif (!$minEq && $value <= $minimum) {
                 $errors[] = self::error($path, "Must be greater than: $minimum");
             }
         }
@@ -143,9 +137,9 @@ class Schema
         $maximum = $schema['maximum'];
         $maxEq   = $schema['maximumCanEqual'];
         if (is_numeric($maximum)) {
-            if ($maxEq && $instance > $maximum) {
+            if ($maxEq && $value > $maximum) {
                 $errors[] = self::error($path, "Must be less than or equal to: $maximum");
-            } elseif (!$maxEq && $instance >= $maximum) {
+            } elseif (!$maxEq && $value >= $maximum) {
                 $errors[] = self::error($path, "Must be less than: $maximum");
             }
         }
@@ -173,9 +167,9 @@ class Schema
         $minimum = $schema['minimum'];
         $minEq   = $schema['minimumCanEqual'] === false ? false : true;
         if (is_numeric($minimum)) {
-            if ($minEq && $instance < $minimum) {
+            if ($minEq && $value < $minimum) {
                 $errors[] = self::error($path, "Must be greater than or equal to: $minimum");
-            } elseif (!$minEq && $instance <= $minimum) {
+            } elseif (!$minEq && $value <= $minimum) {
                 $errors[] = self::error($path, "Must be greater than: $minimum");
             }
         }
@@ -184,9 +178,9 @@ class Schema
         $maximum = $schema['maximum'];
         $maxEq   = $schema['maximumCanEqual'] === false ? false : true;
         if (is_numeric($maximum)) {
-            if ($maxEq && $instance > $maximum) {
+            if ($maxEq && $value > $maximum) {
                 $errors[] = self::error($path, "Must be less than or equal to: $maximum");
-            } elseif (!$maxEq && $instance >= $maximum) {
+            } elseif (!$maxEq && $value >= $maximum) {
                 $errors[] = self::error($path, "Must be less than: $maximum");
             }
         }        
@@ -283,7 +277,7 @@ class Schema
             }
         } elseif ($type instanceof ArrayObject) {
             foreach ($type as $option) {
-                $errors = self::checkType($option, $value, $path);
+                $errors = self::checkType($value, $option, $schema, $path);
                 if (empty($errors)) {
                     return array();
                 }
@@ -296,7 +290,7 @@ class Schema
     
     private static function checkProperty($instance, $schema, $path)
     {
-        if (!($schema instanceof BaseObject)) {
+        if (!($schema instanceof Object)) {
             return self::error($path, 'Invalid schema/property definition.', true);
         }
         
@@ -307,12 +301,7 @@ class Schema
             if ($schema['optional'] !== true) {
                 return self::error($path, 'Property is required', true);
             }
-/*
-        } elseif ($instance === null) {
-            if ($schema['nullable'] !== true) {
-                return self::error($path, 'Property is not nullable', true);
-            } 
-*/
+            return array();
         }
         
         $errors = array();
@@ -329,7 +318,7 @@ class Schema
             if (!($prop instanceof Undefined)) {
                 $disCheck = self::checkType($instance, $prop, $schema, $path);
                 if (empty($disCheck)) {
-                    $errors = array_merge($errors, self::error($path, 'Type must not match disallow'));
+                    $errors = array_merge($errors, self::error($path, 'Type must not match disallow', true));
                 }
             }
         }
@@ -337,7 +326,7 @@ class Schema
         
         
         // End of the tests for Undefined or null values
-        if ($instance instanceof Undefined || $instance === null) {
+        if ($instance === null) {
             return $errors;
         } else {
             
