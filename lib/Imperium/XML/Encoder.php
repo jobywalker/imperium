@@ -100,7 +100,6 @@ class Encoder
     public static function makeNode($data, $node, $options = array())
     {
         $decl = self::declaration($options);
-        $node = self::normalizeNode($node);
         $pre = self::offset($options);
         $wrap = '';
         if (isset($options['wrap']) && $options['wrap'] && isset($options['offset']) && $options['offset']) {
@@ -110,7 +109,14 @@ class Encoder
                 $wrap = "\n";
             }
         }
-        return $decl . $pre . '<' . $node . '>' . $data . $wrap . '</' . $node . '>';
+        $inner = '';
+        if ($node === null) {
+            $inner = $data;
+        } else {
+            $node = self::normalizeNode($node);
+            $inner = '<' . $node . '>' . $data . $wrap . '</' . $node . '>';
+        }
+        return $decl . $pre . $inner;
     }
     
     public static function normalizeNode($node)
@@ -126,7 +132,7 @@ class Encoder
     public static function offset($options=array())
     {
         $pre = '';
-        if (isset($options['offset']) && $options['offset'] && isset($options['depth']) && $options['depth']) {
+        if (isset($options['offset']) && $options['offset'] && isset($options['depth']) && $options['depth'] > 0) {
             $pre .= "\n";
             for ($x=0; $x<$options['depth']; $x++) {
                 $pre .= $options['offset'];

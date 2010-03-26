@@ -9,4 +9,9 @@ class XML
     {
         return XML\Encoder::encode($data, $root, $options);
     }
+    
+    public static function decode($string)
+    {
+        return XML\Decoder::decode($string);
+    }
 }

@@ -3,7 +3,25 @@ namespace Imperium;
 
 class XMLTest extends \PHPUnit_Framework_TestCase
 {
-    public function testEncode()
+    
+    
+    
+    public function testEncodeDecode()
+    {
+        $test = (object) array(
+            'Name' => 'Joby Walker',
+            'HasSkills' => false,
+            'Locations' => (object) array(
+                'Location' => array(
+                    (object) array('Type'=>'work','City'=>'Seattle'),
+                    (object) array('Type'=>'home','City'=>'Seattle','Cats'=>2,'Dogs'=>null),
+                ),
+            ),
+        );
+        $this->assertEquals($test, XML::decode(XML::encode($test, null, array('declare'=>true,'offset'=>'    ','depth'=>-1))));
+    }
+    
+    public function testDecodeEncode()
     {
         $expected = "<?xml version=\"1.0\"?>\n".
                     "<User>\n".
@@ -22,17 +40,6 @@ class XMLTest extends \PHPUnit_Framework_TestCase
                     "        </Location>\n".
                     "    </Locations>\n".
                     "</User>";
-        $test = (object) array(
-            'Name' => 'Joby Walker',
-            'HasSkills' => false,
-            'Talent' => new \Imperium\JSON\Undefined(),
-            'Locations' => (object) array(
-                'Location' => array(
-                    (object) array('Type'=>'work','City'=>'Seattle'),
-                    (object) array('Type'=>'home','City'=>'Seattle','Cats'=>2,'Dogs'=>null),
-                ),
-            ),
-        );
-        $this->assertEquals($expected, XML::encode($test, 'User', array('declare'=>true,'offset'=>'    ')));
+        $this->assertEquals($expected, XML::encode(XML::decode($expected), null, array('declare'=>true,'offset'=>'    ','depth'=>-1)));
     }
 }
