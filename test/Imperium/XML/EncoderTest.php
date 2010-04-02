@@ -32,6 +32,7 @@ class EncoderTest extends \PHPUnit_Framework_TestCase
             'null'      => null,
             'object'    => new Encoder(),
             'object'    => (object) array(1,2,3),
+            'object'    => array('s' => 4, 'g' => 'x'),
             'array'     => array(1,2,3),
             'array'     => new \Imperium\JSON\ArrayObject(array()),
             'undefined' => new \Imperium\JSON\Undefined(),

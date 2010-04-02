@@ -3,9 +3,7 @@ namespace Imperium;
 
 class XMLTest extends \PHPUnit_Framework_TestCase
 {
-    
-    
-    
+
     public function testEncodeDecode()
     {
         $test = (object) array(
@@ -19,8 +17,9 @@ class XMLTest extends \PHPUnit_Framework_TestCase
             ),
         );
         $this->assertEquals($test, XML::decode(XML::encode($test, null, array('declare'=>true,'offset'=>'    ','depth'=>-1))));
+        $this->assertEquals($test, XML::decode(XML::encode($test, 'User', array('declare'=>true,'offset'=>'    ')), array('StripContainer'=>true)));
     }
-    
+
     public function testDecodeEncode()
     {
         $expected = "<?xml version=\"1.0\"?>\n".
@@ -41,5 +40,6 @@ class XMLTest extends \PHPUnit_Framework_TestCase
                     "    </Locations>\n".
                     "</User>";
         $this->assertEquals($expected, XML::encode(XML::decode($expected), null, array('declare'=>true,'offset'=>'    ','depth'=>-1)));
+        $this->assertEquals($expected, XML::encode(XML::decode($expected, array('StripContainer'=>true)), 'User', array('declare'=>true,'offset'=>'    ')));
     }
 }

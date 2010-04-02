@@ -16,14 +16,14 @@ class Decoder
         $string = self::encodeAttributes($string);
         $elements = preg_split('/(\<[^\>]*>)/', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
 
-        return self::unfurl($elements);
+        return self::unfurl($elements, $options);
     }
-    
+
     private static function stripDeclaration($string)
     {
         return preg_replace('/^\s*\<\?xml[^\?\>]*\?\>\s*/', '', $string);
     }
-    
+
     private static function encodeCdata($string)
     {
         $e = preg_split('/(\<\!\[CDATA\[.*\]\]\>)/U', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -31,14 +31,14 @@ class Decoder
         foreach ($e as $s) {
             $matches = array();
             if (preg_match('/^\<\!\[CDATA\[(.*)\]\]\>$/', $s, $matches)) {
-                $output .= htmlspecialchars($matches[1]);
+                $output .= \htmlspecialchars($matches[1]);
             } else {
                 $output .= $s;
             }
         }
         return $output;
     }
-    
+
     private static function encodeAttributes($string)
     {
         $e = preg_split('/(\"[^\"]*\")/', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -46,16 +46,22 @@ class Decoder
         foreach ($e as $s) {
             $matches = array();
             if (preg_match('/^\"(.*)\"$/', $s, $matches)) {
-                $output .= '"'.htmlspecialchars($matches[1]).'"';
+                $output .= '"'.\htmlspecialchars($matches[1]).'"';
             } else {
                 $output .= $s;
             }
         }
         return $output;
     }
-    
-    private static function unfurl($elements)
+
+    private static function unfurl($elements, $options)
     {
+        if (isset($options['StripContainer']) && $options['StripContainer']) {
+            $strip = true;
+            $options['StripContainer'] = false;
+        } else {
+            $strip = false;
+        }
         $count = count($elements);
         if ($count == 1) {
             # if one element must be a value
@@ -70,7 +76,7 @@ class Decoder
             if (preg_match('/^[\s]*$/', $elements[count($elements)-1])) {
                 array_pop($elements);
             }
-            
+
             $node = array_shift($elements);
             $name = self::nodeName($node);
             if (preg_match('/^\<.*\/\s*\>$/', $node)) {
@@ -78,23 +84,33 @@ class Decoder
                 $stage[$name][] = null;
             } else {
                 # we have an node with a value or children
-                # find end node index 
+                # find end node index
                 $end = self::endNode($elements, $name);
-                $stage[$name][] = self::unfurl(array_splice($elements, 0, $end));
+                $stage[$name][] = self::unfurl(array_splice($elements, 0, $end), $options);
                 array_shift($elements);
             }
         }
         $final = array();
         foreach ($stage as $key => $value) {
             if (count($value)==1) {
+                if ($strip) {
+                    return $value[0];
+                }
                 $final[$key] = $value[0];
             } else {
+                if ($strip) {
+                    return $value;
+                }
                 $final[$key] = $value;
             }
         }
-        return (object) $final;
+        if (isset($options['ArrayOutput']) && $options['ArrayOutput']) {
+            return $final;
+        } else {
+            return (object) $final;
+        }
     }
-    
+
     private static function endNode($elements, $node)
     {
         $depth = 0;
@@ -119,14 +135,14 @@ class Decoder
         }
         throw new E\InvalidInputValue("No end node found for $node");
     }
-    
+
     private static function nodeName($string)
     {
         $string = trim($string, "</>");
         $ex = explode(' ', $string);
         return $ex[0];
     }
-    
+
     private static function value($input)
     {
         $input = trim($input);
@@ -140,8 +156,8 @@ class Decoder
             }
             return (float) $input;
         }
-        return htmlspecialchars_decode($input);
+        return \htmlspecialchars_decode($input);
     }
-    
+
 
 }

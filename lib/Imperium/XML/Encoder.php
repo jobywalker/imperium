@@ -13,7 +13,7 @@ class Encoder
         }
         return '';
     }
-    
+
     public static function getType($value)
     {
         $type = \strtolower(\gettype($value));
@@ -23,12 +23,16 @@ class Encoder
             } elseif ($value instanceof \Imperium\JSON\Undefined) {
                 return 'undefined';
             }
+        } elseif ($type == 'array') {
+            if (!empty($value) && (array_keys($value) !== range(0, count($value) - 1))) {
+                return 'object';
+            }
         } elseif ($type == 'integer' || $type == 'double') {
             return 'number';
         }
         return $type;
     }
-    
+
     public static function encode($data, $node = 'root', $options = array())
     {
         $type = self::getType($data);
@@ -63,7 +67,7 @@ class Encoder
         }
         return self::makeNode($s, $node, $options);
     }
-    
+
     public static function encodeArray($data, $node = 'root',$options = array())
     {
         $s = '';
@@ -72,7 +76,7 @@ class Encoder
         }
         return $s;
     }
-    
+
     public static function encodeBoolean($data, $node = 'root',$options = array())
     {
         if ($data) {
@@ -80,23 +84,23 @@ class Encoder
         }
         return self::makeNode('false', $node, $options);
     }
-    
+
     public static function encodeNumber($data, $node = 'root',$options = array())
     {
         return self::makeNode((string)$data, $node, $options);
     }
-    
+
     public static function encodeString($data, $node = 'root',$options = array())
     {
-        $data = htmlspecialchars($data);
+        $data = \htmlspecialchars($data);
         return self::makeNode($data, $node, $options);
     }
-    
+
     public static function encodeNull($data, $node = 'root',$options = array())
     {
         return self::declaration($options) . self::offset($options) . '<' . self::normalizeNode($node) . '/>';
     }
-    
+
     public static function makeNode($data, $node, $options = array())
     {
         $decl = self::declaration($options);
@@ -118,7 +122,7 @@ class Encoder
         }
         return $decl . $pre . $inner;
     }
-    
+
     public static function normalizeNode($node)
     {
         $node = preg_replace('/^[^a-zA-Z_]+/', '', $node);
@@ -128,7 +132,7 @@ class Encoder
         }
         return $node;
     }
-    
+
     public static function offset($options=array())
     {
         $pre = '';
