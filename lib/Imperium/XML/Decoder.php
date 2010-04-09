@@ -1,11 +1,21 @@
 <?php
-
 namespace Imperium\XML;
 
 use Imperium\Exception as E;
 
+/**
+ * Decodes an XML string into PHP native content
+ *
+ * @author Joby Walker <joby@imperium.org>
+ */
 class Decoder
 {
+    /**
+     * Decode xml string to php native content
+     * @param string $string XML String
+     * @param array $options
+     * @return mixed PHP native content
+     */
     public static function decode($string, $options = array())
     {
         # strip xml declaration
@@ -19,11 +29,21 @@ class Decoder
         return self::unfurl($elements, $options);
     }
 
+    /**
+     * Strip XML declaration from content
+     * @param string $string XML content
+     * @return string
+     */
     private static function stripDeclaration($string)
     {
         return preg_replace('/^\s*\<\?xml[^\?\>]*\?\>\s*/', '', $string);
     }
 
+    /**
+     * Replace CDATA sections with htmlescaped content
+     * @param string $string XML Content
+     * @return string
+     */
     private static function encodeCdata($string)
     {
         $e = preg_split('/(\<\!\[CDATA\[.*\]\]\>)/U', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -39,6 +59,11 @@ class Decoder
         return $output;
     }
 
+    /**
+     * Replace attribute values with htmlescaped content
+     * @param $string $string XML content
+     * @return $string
+     */
     private static function encodeAttributes($string)
     {
         $e = preg_split('/(\"[^\"]*\")/', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -54,6 +79,12 @@ class Decoder
         return $output;
     }
 
+    /**
+     * Recursive unfurl of elements into noded structure
+     * @param array $elements
+     * @param array $options
+     * @return mixed PHP native content
+     */
     private static function unfurl($elements, $options)
     {
         if (isset($options['StripContainer']) && $options['StripContainer']) {
@@ -111,6 +142,12 @@ class Decoder
         }
     }
 
+    /**
+     * Find the corresponding end node from
+     * @param array $elements
+     * @param string $node
+     * @return integer Key for the end node
+     */
     private static function endNode($elements, $node)
     {
         $depth = 0;
@@ -136,6 +173,11 @@ class Decoder
         throw new E\InvalidInputValue("No end node found for $node");
     }
 
+    /**
+     * Determine the node name from segment
+     * @param string $string
+     * @return string
+     */
     private static function nodeName($string)
     {
         $string = trim($string, "</>");
@@ -143,6 +185,11 @@ class Decoder
         return $ex[0];
     }
 
+    /**
+     * Retrive a node value
+     * @param string $input
+     * @return mixed
+     */
     private static function value($input)
     {
         $input = trim($input);
